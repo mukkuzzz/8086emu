@@ -3,11 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 
-
-
-
-
-
 typedef union {
 	uint16_t x;
 	struct {
@@ -15,9 +10,6 @@ typedef union {
 		uint8_t h;
 	};
 }reg16;
-
-
-
 
 
 typedef struct{
@@ -31,7 +23,9 @@ typedef struct{
 	uint16_t flags;
 } CPU8086;
 
+#define MEM_SIZE (1024*1024)
 uint8_t memory[1024*1024];
+
 
 
 /**
@@ -49,6 +43,10 @@ uint8_t
 fetch8(CPU8086 *cpu)
 {
 	uint32_t addr = phy(cpu->cs,cpu->ip);
+	if (addr >= MEM_SIZE){
+		printf("Segmentation fault at %04X:%04X\n",cpu->cs,cpu->ip);
+		exit(1);
+	}
 	cpu->ip++;
 	return memory[addr];
 }
@@ -59,6 +57,31 @@ fetch16(CPU8086 *cpu){
 	uint8_t lo =fetch8(cpu);
 	uint8_t hi =fetch8(cpu);
 	return (hi << 8) | lo;
+}
+
+
+void 
+load_binary(const char *filename,uint16_t segment, uint16_t offset)
+{
+	FILE *file = fopen(filename,"rb");
+	if (!file)
+	{
+		perror("fopen");
+		exit(1);
+	}
+
+	uint32_t addr = phy(segment,offset);
+
+	size_t n;
+	
+	while ((n = fread(&memory[addr],1,4096,file)) > 0){
+		addr+=n;
+		if(addr >= MEM_SIZE) { 
+			fprintf(stderr, "Program too large\n"); 
+			exit(1);
+		}
+	}
+	fclose(file);
 }
 
 
