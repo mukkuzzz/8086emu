@@ -88,8 +88,20 @@ load_binary(const char *filename,uint16_t segment, uint16_t offset)
 void 
 execute_instruction(CPU8086 *cpu)
 {
-	printf("PLACEHOLDER");	
+	uint8_t inst = fetch8(cpu);
+
+	printf("%s", inst);
+	
 }
 
 
+
+int
+main()
+{
+	CPU8086 cpu = {0};
+
+	execute_instruction(&cpu);
+
+}
 
