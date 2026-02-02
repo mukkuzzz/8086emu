@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
+
+//struct definition for registers
 typedef union {
 	uint16_t x;
 	struct {
@@ -12,6 +14,8 @@ typedef union {
 }reg16;
 
 
+
+//CPU struct
 typedef struct{
 	reg16 ax,bx,cx,dx;
 	reg16 sp,bp,si,di;
@@ -39,6 +43,7 @@ phy(uint16_t segment ,uint16_t offset)
 	return ((uint32_t)segment << 4 ) + offset;
 }
 
+//Instruction pointer fetch
 uint8_t
 fetch8(CPU8086 *cpu)
 {
@@ -59,7 +64,7 @@ fetch16(CPU8086 *cpu){
 	return (hi << 8) | lo;
 }
 
-
+//load assembly language into memory 
 void 
 load_binary(const char *filename,uint16_t segment, uint16_t offset)
 {
