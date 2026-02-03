@@ -1,7 +1,25 @@
-# Prerequisites
+# Ignore compiled binary
+myprogram
+
+# Ignore object files
+*.o
+
+# Ignore backup files from editors
+*~
+
+# Ignore directory for any IDE-related files (e.g., for VSCode, IntelliJ, etc.)
+.vscode/
+.idea/
+
+# Ignore the directory for temporary files created by the OS
+.DS_Store
+Thumbs.db
+
+
+
+
 *.d
 
-# Object files
 *.o
 *.ko
 *.obj
