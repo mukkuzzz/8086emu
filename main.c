@@ -95,7 +95,7 @@ execute_instruction(CPU8086 *cpu)
 {
 	uint8_t inst = fetch8(cpu);
 
-	printf("%s", inst);
+	printf("%d",inst);	
 	
 }
 
