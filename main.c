@@ -39,11 +39,10 @@ typedef struct{
 #define MEM_SIZE (1024*1024)
 u8 memory[1024*1024];
 
-/**
- * This function only calculates the corresponding physical address
- * for the 8086. 32 bit is used because the address will always be
- * 20 bit and C does not have a native 20 bit type.
- **/
+
+
+
+
 u32 phy(u16 segment, u16 offset) 
 {
 
@@ -68,10 +67,11 @@ fetch8(CPU8086 *cpu)
 u16
 fetch16(CPU8086 *cpu)
 {
-	u8 lo =fetch8(cpu);
-	u8 hi =fetch8(cpu);
+	u8 lo = fetch8(cpu);
+	u8 hi = fetch8(cpu);
 	return (hi << 8) | lo;
 }
+
 
 static reg16* reg_table(CPU8086 *cpu, int index) 
 { 
@@ -86,6 +86,23 @@ static reg16* reg_table(CPU8086 *cpu, int index)
 		case 6: return &cpu->si;
 		case 7: return &cpu->di;
 		default: fprintf(stderr, "Invalid register index %d\n", index); exit(1); 
+	}
+}
+
+static 
+u8* reg8_table(CPU8086 *cpu, int index)
+{
+	switch(index)
+	{	
+		case 0: return &cpu->ax.l;
+		case 1: return &cpu->cx.l;
+		case 2: return &cpu->dx.l;
+		case 3: return &cpu->bx.l;
+		case 4: return &cpu->ax.h;
+		case 5: return &cpu->cx.h;
+		case 6: return &cpu->dx.h;
+		case 7: return &cpu->bx.h;
+		default: fprintf(stderr, "Invalid register h/l index %d\n", index);exit(1);
 	}
 }
 
@@ -160,16 +177,9 @@ execute_instruction(CPU8086 *cpu)
 		case 0xB0 ... 0xB7:
 		{
     			u8 imm = fetch8(cpu);
-    			switch(inst){
-        			case 0xB0: cpu->ax.l = imm; break; // AL
-        			case 0xB1: cpu->cx.l = imm; break; // CL
-        			case 0xB2: cpu->dx.l = imm; break; // DL
-        			case 0xB3: cpu->bx.l = imm; break; // BL
-        			case 0xB4: cpu->ax.h = imm; break; // AH
-        			case 0xB5: cpu->cx.h = imm; break; // CH
-        			case 0xB6: cpu->dx.h = imm; break; // DH
-				case 0xB7: cpu->bx.h = imm; break; // BH
-    			}
+			int index = inst - 0xB0;
+			u8 *ptr = reg8_table(cpu,index);
+			*ptr = imm;
 			break;
 		}
 		
