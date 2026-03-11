@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -73,7 +74,7 @@ fetch16(CPU8086 *cpu)
 }
 
 
-static reg16* reg_table(CPU8086 *cpu, int index) 
+static reg16* reg16_table(CPU8086 *cpu, int index) 
 { 
 	switch(index)
 	{ 
@@ -108,10 +109,33 @@ u8* reg8_table(CPU8086 *cpu, int index)
 
 
 static
-const char *reg_names[8] = {
+const char *reg16_names[8] = {
     "AX","CX","DX","BX","SP","BP","SI","DI"
 };
+static
+const char *reg8_names[8] = {
+	"AL","CL","DL","BL","AH","CH","DH","BH"
+};
 
+typedef struct {
+    u8 modrm; 
+    u8 mod;
+    u8 reg;
+    u8 rm;
+    void *src;   
+    void *dst;
+    const char *src_reg;
+    const char *dst_reg;
+   } ModRM;
+
+ModRM modResolve(CPU8086* cpu,bool ops){
+	ModRM op = {0};
+	op.modrm = fetch8(cpu);
+	op.mod = (op.modrm>>6) & 0x03;
+	op.reg = (op.modrm>>3) & 0x07;
+	op.rm = op.modrm & 0x07;
+	return op;
+}
 
 //load assembly language into memory 
 void 
@@ -169,8 +193,8 @@ execute_instruction(CPU8086 *cpu)
 		{
 			u16 imm = fetch16(cpu);
 			int index = inst - 0xB8;
-			reg_table(cpu,index)->x = imm;
-			printf("MOV %s , %04X\n",reg_names[index],imm);
+			reg16_table(cpu,index)->x = imm;
+			printf("MOV %s , %04X\n",reg16_names[index],imm);
 			break;
 		}			
 		
@@ -181,6 +205,31 @@ execute_instruction(CPU8086 *cpu)
 			u8 *ptr = reg8_table(cpu,index);
 			*ptr = imm;
 			break;
+		}
+
+		case 0x88:
+		{
+			ModRM  res = modResolve(cpu,0);
+			if(res.mod == 3){
+				*(reg8_table(cpu,res.rm)) = *(reg8_table(cpu,res.reg));
+				printf("MOV %s , %s\n",reg8_names[res.rm],reg8_names[res.reg]);
+			}else{
+				u8 offset = fetch16(cpu);
+			
+				u32 addr = phy(cpu->ds,offset);
+				memory[addr] = *(reg8_table(cpu,res.reg));
+				printf("MOV [%04X] %s\n",offset,reg8_names[res.reg]);
+			}
+
+		}
+
+		case 0x89:
+		{
+			ModRM res = modResolve(cpu,0);
+			if(res.mod == 3){
+				*(reg16_table(cpu,res.rm)) = *(reg16_table(cpu,res.reg));
+				printf("MOV %s , %s \n", reg16_names[res.rm],reg16_names[res.reg]);
+			}
 		}
 		
 			
